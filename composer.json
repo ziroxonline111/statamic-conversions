@@ -4,7 +4,7 @@
     "type": "statamic-addon",
     "license": "proprietary",
     "keywords": ["statamic", "statamic-addon", "conversions api", "meta pixel", "facebook capi", "ga4", "measurement protocol", "tiktok events api", "server-side tracking", "utm", "gclid", "fbclid"],
-    "homepage": "https://ziroxonline111.github.io/karelia-labs/products/karelia-conversions/",
+    "homepage": "https://karelialabs.com/platforms/statamic",
     "authors": [
         {
             "name": "Karelia Labs",
