@@ -39,13 +39,17 @@ return [
     ],
 
     /*
-    | Consent. "cookie": only send when the consent cookie below is set (the
-    | {{ conversions:script }} tag gives your cookie banner a one-line call to
-    | set it). "always": send without asking, for sites where no consent is
+    | Consent. "cookie": only send when the visitor's consent cookie says yes,
+    | checked with an exact rule (a preset for your banner, or your own cookie
+    | and value). The {{ conversions:script }} tag also gives any banner a
+    | one-line call to set its own cookie. "always": send without asking, for sites where no consent is
     | needed. Click IDs and UTM tags are only stored after consent as well.
     */
     'consent' => [
         'mode' => env('KARELIA_CONVERSIONS_CONSENT', 'cookie'),
+        // own (KareliaConversions.consent), cookiebot, cookieyes, complianz or custom.
+        'banner' => env('KARELIA_CONVERSIONS_CONSENT_BANNER'),
+        // For "custom": the cookie, and either its exact value or a pair such as marketing:true.
         'cookie' => 'karelia_conversions_consent',
         'value' => '1',
     ],

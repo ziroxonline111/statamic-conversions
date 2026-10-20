@@ -5,8 +5,8 @@
 - **Forms without code.** Pick the forms that count as leads in the Control Panel. Email, phone and name fields are found automatically.
 - **Sign-ups and Cargo orders.** Registrations send a sign-up. Paid Cargo orders send a purchase with value, currency, order number and products.
 - **Click IDs and UTM tags.** `fbclid`, `gclid`, `ttclid`, `msclkid` and `utm_*` from the landing page are kept (after consent) and sent with the conversion, so Meta and TikTok can match it to the ad click.
-- **Consent first.** Nothing is sent and nothing is stored until the visitor accepts marketing cookies. Works with any cookie banner.
-- **Personal data is hashed** (SHA-256) on your server before it is sent, normalised the way each platform matches it. It is never logged.
+- **Consent first.** Nothing is sent, and no click IDs or visitor details are kept, until the visitor accepts marketing cookies. Ready-made rules for Cookiebot, CookieYes and Complianz, a one-line call for any other banner, and a refusal never counts as consent.
+- **Personal data is hashed** (SHA-256) on your server before it is sent, normalised the way each platform matches it: email, phone and names always, and the address too for Meta. Google Analytics 4 requires city, postcode and country in plain text. Nothing personal is logged.
 - **A log in the Control Panel** shows every conversion, where it came from, its value and each platform's answer, with a dashboard widget for the last 30 days.
 - **Test buttons** send a test event to Meta (Test Events), TikTok (test code) and GA4's validation endpoint.
 - **No slowdown for visitors.** Conversions are sent after the response, or on your queue.
@@ -72,7 +72,22 @@ and when they withdraw consent:
 KareliaConversions.consent(false);
 ```
 
-If your banner already writes a cookie, you can use that instead: set **Consent cookie** to its name and **Cookie contains** to the text that means "marketing accepted" (for example `marketing`). For sites that need no consent, choose **Always**.
+Or let the addon read the cookie your banner already writes. Choose your banner under **Settings → Consent → Cookie banner**:
+
+| Banner | Cookie | Counts as consent |
+|---|---|---|
+| Cookiebot | `CookieConsent` | `marketing:true` (and never `marketing:false`) |
+| CookieYes | `cookieyes-consent` | `advertisement:yes` (and never `advertisement:no`) |
+| Complianz | `cmplz_marketing` | exactly `allow` |
+
+For another banner, choose **Another banner**, enter its cookie name, and the **Accepted value**:
+
+- a key and value, such as `marketing:true`. It matches `marketing:true`, `"marketing":true` and `marketing=true`, and a cookie that says `marketing:false`, `"marketing":false` or `marketing=no` never counts;
+- or the exact cookie value, such as `allow` or `1`. The whole cookie must equal it.
+
+The value is never matched as "contains", because many banners write every category whether it was accepted or not. Banners that only list the accepted categories (for example `"categories":["necessary","marketing"]`) are best connected with `KareliaConversions.consent(true)` from the banner's own "accepted" callback.
+
+For sites that need no consent, choose **Always**.
 
 ### 5. Test
 
@@ -123,11 +138,13 @@ To decide consent in code instead of with a cookie:
 
 ## Cargo orders
 
-Payment is often confirmed by a webhook from the payment provider, so the request that marks an order paid is not the shopper's. Karelia Conversions therefore keeps the shopper's details (IP address, browser, click IDs, consent) when the order is created during checkout, and uses them when the order is paid. Amounts are converted from Cargo's minor units, and the currency comes from the site.
+Payment is often confirmed by a webhook from the payment provider, so the request that marks an order paid is not the shopper's. When the shopper has given consent, Karelia Conversions therefore keeps their details (IP address, browser, click IDs) in the cache for up to 14 days from checkout, and uses them when the order is paid. Without consent it keeps only the fact that consent was not given. Amounts are converted from Cargo's minor units, and the currency comes from the site.
 
 ## What is sent, and what is kept
 
-- **Sent:** the event, its time and ID, the page address, the visitor's IP address and browser, the click IDs and first-party cookies the platforms set themselves (`_fbp`, `_fbc`, `_ga`, `_ttp`), value, currency and products, and email, phone, name, city, postcode and country **hashed with SHA-256**.
+- **Sent:** the event, its time and ID, the page address, the visitor's IP address and browser, the click IDs and first-party cookies the platforms set themselves (`_fbp`, `_fbc`, `_ga`, `_ttp`), value, currency and products.
+- **Sent hashed with SHA-256:** email, phone and user ID to all three; first and last name to Meta and Google Analytics 4; city, postcode and country to Meta. TikTok receives no name or address.
+- **Sent in plain text:** city, postcode and country to Google Analytics 4, because its Measurement Protocol only accepts them that way. Leave those fields out of your forms if you do not want that.
 - **Not sent:** anything for visitors who have not given consent (in "Only after consent" mode).
 - **Kept on your server:** a log line per conversion in `storage/statamic/karelia-conversions`, with the event, source, value, UTM source and campaign, click ID type and each platform's answer. No names, emails, phone numbers or IP addresses. Lines older than 30 days are deleted (configurable).
 - **Never sent to Karelia Labs.** The addon has no telemetry and no licence server.
@@ -147,6 +164,7 @@ php artisan vendor:publish --tag=statamic-conversions-config
 | `KARELIA_CONVERSIONS_ENABLED` | `true` | Switch all sending off, e.g. on staging |
 | `KARELIA_CONVERSIONS_QUEUE` | none | Queue connection. Without one, conversions are sent right after the response |
 | `KARELIA_CONVERSIONS_CONSENT` | `cookie` | `cookie` or `always` |
+| `KARELIA_CONVERSIONS_CONSENT_BANNER` | `own` | `own`, `cookiebot`, `cookieyes`, `complianz` or `custom` (the settings page wins) |
 | `KARELIA_CONVERSIONS_CURRENCY` | `USD` | Default currency |
 | `KARELIA_CONVERSIONS_GA4_ENDPOINT` | `https://www.google-analytics.com` | Use `https://region1.google-analytics.com` to keep collection in the EU |
 | `KARELIA_CONVERSIONS_META_API_VERSION` | `v26.0` | Graph API version |

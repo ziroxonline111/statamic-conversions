@@ -6,7 +6,9 @@ use Illuminate\Support\Str;
 
 /**
  * Normalises and hashes personal data the way the platforms match it.
- * Nothing personal ever leaves the server unhashed.
+ * Email, phone, names and the user ID are always sent hashed. Meta also gets
+ * city, postcode and country hashed; Google Analytics 4 requires those three
+ * in plain text, so they are sent to GA4 unhashed. TikTok gets no address.
  */
 final class UserData
 {

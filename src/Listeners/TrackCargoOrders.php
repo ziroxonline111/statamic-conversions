@@ -11,9 +11,10 @@ use KareliaLabs\Conversions\Settings;
  * Purchases from Cargo (duncanmcclean/statamic-cargo).
  *
  * Payment is often confirmed by a webhook from the payment provider, so the
- * request that marks the order paid is not the customer's. The visitor's
- * details (IP, browser, click IDs, consent) are therefore saved when the order
- * is created during checkout, and used when the order is paid.
+ * request that marks the order paid is not the customer's. When the visitor
+ * has given consent, their details (IP, browser, click IDs) are therefore kept
+ * in the cache for up to 14 days from checkout and used when the order is paid.
+ * Without consent only "no consent" is kept.
  */
 class TrackCargoOrders
 {
@@ -30,6 +31,13 @@ class TrackCargoOrders
         }
 
         $context = Conversion::make('purchase')->fromRequest(request());
+
+        // Without consent nothing about the visitor is kept, only that consent was not given.
+        if (! $context->consent) {
+            Cache::put($this->key($order), ['consent' => false], now()->addDays(14));
+
+            return;
+        }
 
         Cache::put($this->key($order), [
             'url' => $context->url,

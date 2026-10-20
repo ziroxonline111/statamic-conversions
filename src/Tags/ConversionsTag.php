@@ -3,6 +3,7 @@
 namespace KareliaLabs\Conversions\Tags;
 
 use KareliaLabs\Conversions\Attribution;
+use KareliaLabs\Conversions\Consent;
 use KareliaLabs\Conversions\Settings;
 use Statamic\Tags\Tags;
 
@@ -23,12 +24,14 @@ class ConversionsTag extends Tags
 
     public function script(): string
     {
-        $ownCookie = Settings::consentCookie() === config('statamic.conversions.consent.cookie', 'karelia_conversions_consent');
+        [$consentCookie, $consentKey, $consentValue] = Consent::rule();
+        $ownCookie = Settings::consentBanner() === 'own';
 
         $config = json_encode([
             'always' => Settings::consentMode() === 'always',
-            'consentCookie' => Settings::consentCookie(),
-            'consentValue' => Settings::consentValue(),
+            'consentCookie' => $consentCookie,
+            'consentKey' => $consentKey,
+            'consentValue' => $consentValue,
             'ownCookie' => $ownCookie,
             'cookie' => Settings::attributionCookie(),
             'days' => Settings::attributionDays(),
@@ -52,10 +55,23 @@ class ConversionsTag extends Tags
     function set(n, v, age) {
         d.cookie = n + '=' + encodeURIComponent(v) + ';path=/;max-age=' + age + ';SameSite=Lax' + (location.protocol === 'https:' ? ';Secure' : '');
     }
+    // The same exact rule as on the server (Consent::matches): never "contains".
+    function strip(s) {
+        return String(s).replace(/^[\s"']+|[\s"']+$/g, '');
+    }
     function consented() {
         if (c.always) return true;
-        var v = get(c.consentCookie);
-        return v !== null && (c.consentValue === '' ? v !== '' : v.indexOf(c.consentValue) !== -1);
+        var v = get(c.consentCookie), want = String(c.consentValue || '').toLowerCase();
+        if (v === null || want === '') return false;
+        if (!c.consentKey) return strip(v).toLowerCase() === want;
+        var key = String(c.consentKey).toLowerCase(), seen = false, parts = v.split(/[,;&|{}\[\]]/);
+        for (var i = 0; i < parts.length; i++) {
+            var at = parts[i].search(/[:=]/);
+            if (at < 0 || strip(parts[i].slice(0, at)).toLowerCase() !== key) continue;
+            seen = true;
+            if (strip(parts[i].slice(at + 1)).toLowerCase() !== want) return false;
+        }
+        return seen;
     }
     var params = new URLSearchParams(location.search), found = {}, any = false;
     for (var i = 0; i < c.keys.length; i++) {
@@ -74,7 +90,7 @@ class ConversionsTag extends Tags
     w.KareliaConversions = {
         consent: function (on) {
             if (on) {
-                if (c.ownCookie) set(c.consentCookie, c.consentValue || '1', 31536000);
+                if (c.ownCookie) set(c.consentCookie, '1', 31536000);
                 store();
             } else {
                 if (c.ownCookie) set(c.consentCookie, '', 0);

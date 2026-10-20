@@ -133,9 +133,9 @@ class FormConversionTest extends TestCase
     public function a_cookie_from_another_banner_can_count_as_consent()
     {
         $this->fakePlatforms();
-        config(['statamic.conversions.consent.cookie' => 'cookie_preferences', 'statamic.conversions.consent.value' => 'marketing']);
+        config(['statamic.conversions.consent.banner' => 'custom', 'statamic.conversions.consent.cookie' => 'cookie_preferences', 'statamic.conversions.consent.value' => 'marketing:true']);
 
-        $this->submitContactForm(['cookie_preferences' => '{"necessary":true,"categories":["analytics","marketing"]}']);
+        $this->submitContactForm(['cookie_preferences' => '{"necessary":true,"analytics":false,"marketing":true}']);
 
         Http::assertSentCount(3);
     }

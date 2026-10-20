@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.1 (2026-10-20)
+
+- Consent from a banner's own cookie is checked exactly, never as "contains": a key and value such as `marketing:true`, or the exact cookie value. A refusal such as `marketing:false` or `advertisement:no` can no longer count as consent.
+- Ready-made consent rules for Cookiebot, CookieYes and Complianz.
+- Cargo orders: the shopper's IP address, browser and click IDs are only kept between checkout and payment when they have given consent.
+- The documentation now says exactly what is hashed: Google Analytics 4 receives city, postcode and country in plain text, as its API requires.
+
 ## 1.0.0 (2026-10-20)
 
 First release.

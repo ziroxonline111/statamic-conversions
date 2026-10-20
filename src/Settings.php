@@ -81,6 +81,22 @@ final class Settings
         return in_array($mode, ['cookie', 'always'], true) ? $mode : 'cookie';
     }
 
+    /**
+     * The cookie banner: a preset, "own" (KareliaConversions.consent), or "custom".
+     * Older settings with their own cookie name count as "custom".
+     */
+    public static function consentBanner(): string
+    {
+        $banner = (string) self::get('consent_banner', config('statamic.conversions.consent.banner', ''));
+
+        if ($banner === '') {
+            $cookie = (string) self::get('consent_cookie', '');
+            $banner = $cookie !== '' && $cookie !== config('statamic.conversions.consent.cookie', 'karelia_conversions_consent') ? 'custom' : 'own';
+        }
+
+        return in_array($banner, ['own', 'cookiebot', 'cookieyes', 'complianz', 'custom'], true) ? $banner : 'own';
+    }
+
     public static function consentCookie(): string
     {
         return (string) (self::get('consent_cookie') ?: config('statamic.conversions.consent.cookie', 'karelia_conversions_consent'));
@@ -298,8 +314,25 @@ final class Settings
                                         'default' => 'cookie',
                                     ],
                                 ],
-                                ['handle' => 'consent_cookie', 'field' => ['type' => 'text', 'display' => __('Consent cookie'), 'instructions' => __('Leave empty to use karelia_conversions_consent.'), 'width' => 50, 'if' => ['consent_mode' => 'cookie']]],
-                                ['handle' => 'consent_value', 'field' => ['type' => 'text', 'display' => __('Cookie contains'), 'instructions' => __('Consent counts when the cookie contains this text, e.g. "marketing". Leave empty to use 1.'), 'width' => 50, 'if' => ['consent_mode' => 'cookie']]],
+                                [
+                                    'handle' => 'consent_banner',
+                                    'field' => [
+                                        'type' => 'select',
+                                        'display' => __('Cookie banner'),
+                                        'instructions' => __('Which cookie says that the visitor accepted marketing cookies. The ready-made choices check the exact value for marketing, so a visitor who declined is never counted.'),
+                                        'options' => [
+                                            'own' => __('My banner calls KareliaConversions.consent(true)'),
+                                            'cookiebot' => __('Cookiebot (CookieConsent: marketing:true)'),
+                                            'cookieyes' => __('CookieYes (cookieyes-consent: advertisement:yes)'),
+                                            'complianz' => __('Complianz (cmplz_marketing = allow)'),
+                                            'custom' => __('Another banner: choose the cookie and value'),
+                                        ],
+                                        'default' => 'own',
+                                        'if' => ['consent_mode' => 'cookie'],
+                                    ],
+                                ],
+                                ['handle' => 'consent_cookie', 'field' => ['type' => 'text', 'display' => __('Consent cookie'), 'instructions' => __('The name of the cookie your banner sets.'), 'width' => 50, 'if' => ['consent_mode' => 'cookie', 'consent_banner' => 'custom']]],
+                                ['handle' => 'consent_value', 'field' => ['type' => 'text', 'display' => __('Accepted value'), 'instructions' => __('Either the exact cookie value, e.g. allow, or a key and value, e.g. marketing:true. A key and value also match "marketing":true and marketing=true, and never marketing:false. "Contains" is not used.'), 'width' => 50, 'if' => ['consent_mode' => 'cookie', 'consent_banner' => 'custom']]],
                             ],
                         ],
                     ],
