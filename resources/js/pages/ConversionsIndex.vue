@@ -94,9 +94,13 @@ function test(platform) {
             class="-mt-4 mb-6"
         />
 
-        <Alert v-if="!enabled" variant="warning" class="mb-6" :heading="__('Sending is switched off')">
-            {{ __('KARELIA_CONVERSIONS_ENABLED is false, so nothing is sent.') }}
-        </Alert>
+        <Alert
+            v-if="!enabled"
+            variant="warning"
+            class="mb-6"
+            :heading="__('Sending is switched off')"
+            :text="__('KARELIA_CONVERSIONS_ENABLED is false, so nothing is sent.')"
+        />
 
         <Panel v-if="needsSetup" class="mb-6">
             <PanelHeader>
