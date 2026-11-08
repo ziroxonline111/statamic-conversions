@@ -183,7 +183,7 @@ php artisan vendor:publish --tag=statamic-conversions-config
 
 ## Support
 
-support@karelialabs.atlassian.net · Documentation: https://ziroxonline111.github.io/karelia-labs/products/karelia-conversions/docs/
+support@karelialabs.com · Documentation: https://ziroxonline111.github.io/karelia-labs/products/karelia-conversions/docs/
 
 ## Licence
 
